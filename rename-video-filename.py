@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+"""
+rename-video-filename.py 
+
+This script renames a movie file name to the created at date and time
+from the metadata.
+
+LICENSE: GPLv3
+Dependencies: ffmpeg (for ffprobe)
+"""
+
+import os, sys, getopt, json, subprocess
+
+def get_creation_time(file_path):
+    cmd = [
+        'ffprobe',
+        '-v', 'quiet',
+        '-print_format', 'json',
+        '-show_entries', 'stream=index,codec_type:stream_tags=creation_time:format_tags=creation_time',
+        file_path
+        ]
+    data = json.loads(subprocess.check_output(cmd))
+    return data['streams'][0]['tags']['creation_time']
+
+def get_filename(path):
+    ext = os.path.splitext(path)[1]
+    dt = get_creation_time(path)
+    date = dt[:10].replace('-', '')
+    time = dt[11:19].replace(':', '')
+    return date + '_' + time + ext
+
+def rename_file(path, dryrun, old_files):
+    new_fn = get_filename(path)
+    new_path = os.path.join(os.path.dirname(path), new_fn)
+    print(path + " -> " + new_path)
+    if os.path.isfile(new_path) or new_path in old_files:
+        raise FileExistsError("File already exists: '" + new_path + "' can't overwrite with '" + path + "'")
+    if not dryrun:
+        os.rename(path, new_path)
+    else:
+        old_files.append(new_path)
+
+def usage():
+    print("usage: rename-video-filename.py PATHs [dryrun]")
+
+def main(argv):
+    if len(argv) < 1:
+        usage()
+    else:
+        dryrun = argv[len(argv)-1] == "dryrun"
+        old_files = []
+        for f in argv:
+            if not f == "dryrun":
+                try:
+                    rename_file(f, dryrun, old_files)
+                except FileExistsError as e:
+                    print(e)
+    
+if __name__ == "__main__":
+   main(sys.argv[1:])
