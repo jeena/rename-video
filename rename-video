@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-rename-video-filename.py 
+rename-video 
 
 This script renames a movie file name to the created at date and time
 from the metadata.
@@ -42,7 +42,7 @@ def rename_file(path, dryrun, old_files):
         old_files.append(new_path)
 
 def usage():
-    print("usage: rename-video-filename.py PATHs [dryrun]")
+    print("usage: rename-video PATHs [dryrun]")
 
 def main(argv):
     if len(argv) < 1:
